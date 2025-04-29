@@ -32,7 +32,7 @@ model = load_whisper_model()
 
 # ─────────────────────────── OpenRouter Helper ─────────────────────────────
 API_KEY   = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
-LLM_MODEL = "mistralai/mistral-7b-instruct"
+LLM_MODEL = "mistralai/mistral-7b-instruct:free"
 
 def summarize_chunk(text: str) -> str:
     if not API_KEY:
