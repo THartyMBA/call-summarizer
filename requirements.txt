@@ -2,3 +2,4 @@ streamlit>=1.32
 faster-whisper
 requests
 tiktoken
+openai-whisper
