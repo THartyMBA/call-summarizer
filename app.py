@@ -25,14 +25,17 @@ from typing import List
 import tiktoken  # for token-safe chunking if you prefer
 from email.utils import format_datetime
 import datetime
+import whisper
 
-# ─────────────────────────── Model Initialization ───────────────────────────
 @st.cache_resource(show_spinner=False)
 def load_whisper_model():
-    # tiny/int8 gives ~98% on clear audio; runs on CPU
-    return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
+    # This will download on first run locally, then reuse cached files
+    return whisper.load_model("tiny.en")
 
-whisper = load_whisper_model()
+model = load_whisper_model()
+result = model.transcribe(audio_path)
+transcript = result["text"]
+
 
 # ─────────────────────────── OpenRouter Helper ─────────────────────────────
 API_KEY = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
