@@ -18,29 +18,23 @@ Upload a WAV/MP3 call recording. This POC:
 For enterprise speech-analytics, [contact me](https://drtomharty.com/bio).
 """
 
-import io, tempfile, os, requests, streamlit as st
+# call_summarizer_app.py
+import os, tempfile, requests, streamlit as st
 from typing import List
-import tiktoken  # for token-safe chunking if you prefer
-from email.utils import format_datetime
-import datetime
 import whisper
 
+# ──────────────────────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner=False)
 def load_whisper_model():
-    # This will download on first run locally, then reuse cached files
     return whisper.load_model("tiny.en")
 
 model = load_whisper_model()
-result = model.transcribe(audio_path)
-transcript = result["text"]
-
 
 # ─────────────────────────── OpenRouter Helper ─────────────────────────────
-API_KEY = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
-LLM_MODEL = "mistralai/mistral-7b-instruct:free"
+API_KEY   = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
+LLM_MODEL = "mistralai/mistral-7b-instruct"
 
 def summarize_chunk(text: str) -> str:
-    """Summarize a chunk of transcript into call notes."""
     if not API_KEY:
         raise RuntimeError("Set OPENROUTER_API_KEY in secrets or env")
     prompt = (
@@ -60,14 +54,14 @@ def summarize_chunk(text: str) -> str:
         ],
         "temperature": 0.2
     }
-    res = requests.post(
+    r = requests.post(
         "https://openrouter.ai/api/v1/chat/completions",
         headers={"Authorization":f"Bearer {API_KEY}", "Content-Type":"application/json"},
         json=payload,
         timeout=60
     )
-    res.raise_for_status()
-    return res.json()["choices"][0]["message"]["content"]
+    r.raise_for_status()
+    return r.json()["choices"][0]["message"]["content"]
 
 def chunk_text(text: str, max_words: int = 1000) -> List[str]:
     words = text.split()
@@ -85,36 +79,36 @@ st.info(
     icon="💡"
 )
 
-audio_file = st.file_uploader("Upload WAV / MP3 call recording (≤10 min)", type=["wav","mp3"])
+audio_file = st.file_uploader("Upload WAV/MP3 (≤10 min)", type=["wav","mp3"])
 if not audio_file:
     st.stop()
 
-# Save temp file
+# Save temp file and define audio_path here
 with tempfile.NamedTemporaryFile(delete=False) as tmp:
     tmp.write(audio_file.read())
     audio_path = tmp.name
 
-# Transcription
 if st.button("🚀 Transcribe & Summarize"):
+    # 1) Transcribe using the loaded model
     with st.spinner("Transcribing audio…"):
-        segments, _ = whisper.transcribe(audio_path, beam_size=5)
-        transcript = " ".join(seg.text for seg in segments)
+        result = model.transcribe(audio_path)          # use model, not whisper
+        # `result` is a dict for openai-whisper: {"text": "..."} 
+        transcript = result["text"]
 
     st.subheader("📜 Transcript")
     st.text_area("Full call transcript", transcript, height=300)
 
-    # Summarization
+    # 2) Summarize chunks
     st.subheader("📝 Generated Call Notes")
     notes_list = []
     for chunk in chunk_text(transcript, max_words=1000):
         with st.spinner("Summarizing…"):
-            notes = summarize_chunk(chunk)
-        notes_list.append(notes)
+            notes_list.append(summarize_chunk(chunk))
 
     full_notes = "\n\n---\n\n".join(notes_list)
     st.markdown(full_notes)
 
-    # Download buttons
+    # 3) Download buttons
     st.download_button(
         "⬇️ Download transcript (.txt)",
         transcript.encode(),
