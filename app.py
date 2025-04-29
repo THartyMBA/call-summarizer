@@ -22,13 +22,13 @@ For enterprise speech-analytics, [contact me](https://drtomharty.com/bio).
 import os, tempfile, requests, streamlit as st
 from typing import List
 import whisper
+from faster_whisper import WhisperModel
 
 # ──────────────────────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner=False)
-def load_whisper_model():
-    return whisper.load_model("tiny.en")
-
-model = load_whisper_model()
+ @st.cache_resource(show_spinner=False)
+ def load_whisper_model():
+     # uses the tiny model (~75MB) and runs on CPU with int8 quantization
+     return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
 
 # ─────────────────────────── OpenRouter Helper ─────────────────────────────
 API_KEY   = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
@@ -88,15 +88,18 @@ with tempfile.NamedTemporaryFile(delete=False) as tmp:
     tmp.write(audio_file.read())
     audio_path = tmp.name
 
+model = load_whisper_model()
+
 if st.button("🚀 Transcribe & Summarize"):
-    # 1) Transcribe using the loaded model
     with st.spinner("Transcribing audio…"):
-        result = model.transcribe(audio_path)          # use model, not whisper
-        # `result` is a dict for openai-whisper: {"text": "..."} 
-        transcript = result["text"]
+        segments, _ = model.transcribe(audio_path, beam_size=5)
+        transcript = " ".join(seg.text for seg in segments)
 
     st.subheader("📜 Transcript")
     st.text_area("Full call transcript", transcript, height=300)
+
+    # ... rest of your summarization code unchanged ...
+
 
     # 2) Summarize chunks
     st.subheader("📝 Generated Call Notes")
