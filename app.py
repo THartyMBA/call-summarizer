@@ -26,9 +26,9 @@ from faster_whisper import WhisperModel
 
 # ──────────────────────────────────────────────────────────────────────────
 @st.cache_resource(show_spinner=False)
- def load_whisper_model():
-     # uses the tiny model (~75MB) and runs on CPU with int8 quantization
-     return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
+def load_whisper_model():
+   # uses the tiny model (~75MB) and runs on CPU with int8 quantization
+   return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
 
 # ─────────────────────────── OpenRouter Helper ─────────────────────────────
 API_KEY   = st.secrets.get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY") or ""
