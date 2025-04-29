@@ -19,7 +19,8 @@ For enterprise speech-analytics, [contact me](https://drtomharty.com/bio).
 """
 
 import io, tempfile, os, requests, streamlit as st
-from faster_whisper import WhisperModel
+from faster_whisper import download_model
+download_model("openai/whisper-tiny", output_dir="models/whisper-tiny")
 from typing import List
 import tiktoken  # for token-safe chunking if you prefer
 from email.utils import format_datetime
