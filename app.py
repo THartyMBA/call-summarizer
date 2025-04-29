@@ -29,7 +29,7 @@ import datetime
 @st.cache_resource(show_spinner=False)
 def load_whisper_model():
     # tiny/int8 gives ~98% on clear audio; runs on CPU
-    return WhisperModel("tiny", device="cpu", compute_type="int8")
+    return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
 
 whisper = load_whisper_model()
 
