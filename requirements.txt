@@ -3,3 +3,4 @@ faster-whisper
 requests
 tiktoken
 openai-whisper
+faster-whisper
