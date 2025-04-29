@@ -25,7 +25,7 @@ import whisper
 from faster_whisper import WhisperModel
 
 # ──────────────────────────────────────────────────────────────────────────
- @st.cache_resource(show_spinner=False)
+@st.cache_resource(show_spinner=False)
  def load_whisper_model():
      # uses the tiny model (~75MB) and runs on CPU with int8 quantization
      return WhisperModel("openai/whisper-tiny", device="cpu", compute_type="int8")
